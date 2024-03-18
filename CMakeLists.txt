@@ -183,6 +183,11 @@ if (libssh_FOUND)
     add_subdirectory(sftp)
 endif ()
 add_subdirectory( filenamesearch )
+
+if(NOT WIN32)
+    add_subdirectory( cmdtoolsearch )
+endif()
+
 if (Libmtp_FOUND)
   add_subdirectory(mtp)
 endif()

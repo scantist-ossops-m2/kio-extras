@@ -1,0 +1,127 @@
+#include "cmdtool.h"
+
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QProcess>
+
+CmdTool::CmdTool(const QString &path)
+    : m_toolDir(path)
+{
+    m_name = m_toolDir.dirName();
+
+    if (!m_toolDir.exists() || !m_toolDir.exists(QStringLiteral("metadata.json")) || !m_toolDir.exists(QStringLiteral("check"))
+        || !m_toolDir.exists(QStringLiteral("run"))) {
+        return;
+    }
+
+    // Read metadata
+    QFile metadataFile(m_toolDir.absoluteFilePath(QStringLiteral("metadata.json")));
+    if (!metadataFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "Couldn't open" << metadataFile.fileName();
+        return;
+    }
+
+    QJsonObject metadata = QJsonDocument::fromJson(metadataFile.readAll()).object();
+    metadataFile.close();
+    QString separator = metadata[QStringLiteral("separator")].toString();
+    if (separator == QStringLiteral("nul")) {
+        m_separator = SEP_NUL;
+    } else if (separator == QStringLiteral("newline")) {
+        m_separator = SEP_NEWLINE;
+    } else {
+        return;
+    }
+
+    m_isValid = true;
+
+    // Check if the tool is available
+    QProcess process;
+    process.start(m_toolDir.absoluteFilePath(QStringLiteral("check")), QStringList(), QIODevice::ReadOnly);
+    if (process.waitForFinished() && process.exitCode() == 0) {
+        m_isAvailable = true;
+    }
+}
+
+QString CmdTool::path() const
+{
+    return m_toolDir.absolutePath();
+}
+
+QString CmdTool::name() const
+{
+    return m_name;
+}
+
+bool CmdTool::isValid() const
+{
+    return m_isAvailable;
+}
+
+bool CmdTool::isAvailable() const
+{
+    return m_isAvailable;
+}
+
+CmdTool::Separator CmdTool::separator() const
+{
+    return m_separator;
+}
+
+bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool checkContent)
+{
+    if (!isAvailable()) {
+        return false;
+    }
+
+    QProcess process;
+    process.setWorkingDirectory(searchDir);
+    process.setProgram(m_toolDir.absoluteFilePath(QStringLiteral("run")));
+
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert(QStringLiteral("SEARCH_PATTERN"), searchPattern);
+    env.insert(QStringLiteral("CHECK_CONTENT"), checkContent ? QStringLiteral("1") : QStringLiteral("0"));
+    process.setProcessEnvironment(env);
+
+    process.start(QIODeviceBase::ReadOnly | QIODeviceBase::Unbuffered);
+
+    QDir rootDir(searchDir);
+    QByteArray output;
+    const char sep = separator() == CmdTool::SEP_NUL ? '\0' : '\n';
+
+    do {
+        if (!process.waitForReadyRead()) {
+            continue;
+        }
+        output.append(process.readAll());
+        int begin = 0;
+        while (begin < output.size()) {
+            const int end = output.indexOf(sep, begin);
+            if (end < 0) {
+                // incomplete output, wait for more
+                break;
+            }
+
+            if (end > begin) {
+                QString s = QString::fromUtf8(output.mid(begin, end - begin));
+                Q_EMIT result(s);
+            }
+
+            begin = end + 1;
+        }
+        if (begin < output.size()) {
+            output = output.mid(begin);
+        } else {
+            output.clear();
+        }
+    } while (process.state() == QProcess::Running);
+
+    if (!output.isEmpty()) {
+        QString s = QString::fromUtf8(output);
+        Q_EMIT result(s);
+    }
+
+    return process.exitCode() == 0;
+}
+
+#include "cmdtool.moc"

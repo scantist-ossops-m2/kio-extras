@@ -1,0 +1,2 @@
+#!/bin/sh
+find --version | grep --quiet "find (GNU findutils)"

@@ -1,0 +1,37 @@
+kcoreaddons_add_plugin(kio_cmdtoolsearch INSTALL_NAMESPACE "kf6/kio")
+
+configure_file(config.h.cmake config.h)
+
+add_library(cmdtool_static STATIC)
+target_sources(cmdtool_static PRIVATE cmdtool.cpp cmdtool_manager.cpp)
+target_link_libraries(cmdtool_static
+    Qt::Core
+)
+
+add_executable(cmdtool)
+ecm_mark_nongui_executable(cmdtool)
+target_sources(cmdtool PRIVATE cmdtool_main.cpp)
+target_link_libraries(cmdtool
+    cmdtool_static
+    Qt::Core
+    KF6::I18n
+)
+install(TARGETS cmdtool DESTINATION ${KDE_INSTALL_FULL_LIBEXECDIR}/cmdtoolsearch)
+
+target_link_libraries(kio_cmdtoolsearch cmdtool_static KF6::KIOCore KF6::DBusAddons Qt::Network KF6::KIOCore KF6::I18n)
+target_sources(kio_cmdtoolsearch PRIVATE kio_cmdtoolsearch.cpp)
+
+ecm_qt_declare_logging_category(kio_cmdtoolsearch
+    HEADER kio_cmdtoolsearch_debug.h
+    IDENTIFIER KIO_CMDTOOLSEARCH
+    CATEGORY_NAME kf.kio.workers.cmdtoolsearch
+    OLD_CATEGORY_NAMES kio_cmdtoolsearch kf.kio.slaves.cmdtoolsearch
+    DESCRIPTION "KIO cmdtoolsearch"
+    EXPORT KIO_EXTRAS
+)
+
+install(DIRECTORY tools/ DESTINATION ${KDE_INSTALL_FULL_LIBEXECDIR}/cmdtoolsearch USE_SOURCE_PERMISSIONS)
+
+if (BUILD_TESTING)
+    add_subdirectory(autotests)
+endif()

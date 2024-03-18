@@ -1,0 +1,2 @@
+#!/bin/sh
+fd --help | grep --quiet "A program to find entries in your filesystem"

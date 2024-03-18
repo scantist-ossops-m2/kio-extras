@@ -1,0 +1,2 @@
+#!/bin/sh
+grep --version | grep --quiet "grep (GNU grep)"
