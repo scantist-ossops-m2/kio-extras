@@ -8,8 +8,9 @@
       * run (executable)
         * search in the working directory
         * env:
-          * SEARCH_TERM : search term
-          * CHECK_CONTENT : search in file contents
+          * SEARCH_TERM : the search term
+          * CHECK_CONTENT : 1 if search in file contents, empty otherwise
+          * IN_HDD : 1 if the working directory is in the HDD, empty otherwise
         * return 0 if successful
       * check (executable)
         * return 0 if the tool is installed, 1 otherwise
