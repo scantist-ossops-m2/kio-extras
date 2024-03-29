@@ -25,6 +25,7 @@ private Q_SLOTS:
         QCOMPARE(grep.separator(), CmdTool::SEP_NEWLINE);
     }
 
+#ifdef __linux__
     void testFind()
     {
         CmdTool find(QStringLiteral(KDE_INSTALL_FULL_LIBEXECDIR "/cmdtoolsearch/find"));
@@ -33,6 +34,7 @@ private Q_SLOTS:
         });
         QVERIFY(find.run(QStringLiteral(KDE_INSTALL_FULL_LIBEXECDIR "/cmdtoolsearch/find"), QStringLiteral("run"), false));
     }
+#endif
 };
 
 QTEST_GUILESS_MAIN(CmdToolTest)
