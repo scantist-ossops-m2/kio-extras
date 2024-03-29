@@ -135,7 +135,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
 
     QDir rootDir(dirUrl.toLocalFile());
     connect(tool, &CmdTool::result, [this, rootDir](const QString &filePath) {
-        QString fullPath = rootDir.filePath(filePath);
+        QString fullPath = rootDir.filePath(filePath.endsWith(QLatin1Char('/')) ? filePath.left(filePath.size() - 1) : filePath);
         QUrl url = QUrl::fromLocalFile(fullPath);
         KIO::UDSEntry uds;
         uds.reserve(3);
