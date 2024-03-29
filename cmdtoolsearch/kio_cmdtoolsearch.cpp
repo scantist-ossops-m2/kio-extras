@@ -86,7 +86,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
     const bool checkContent = urlQuery.queryItemValue(QStringLiteral("checkContent")) == QLatin1String("yes");
     const QUrl dirUrl = QUrl(urlQuery.queryItemValue(QStringLiteral("url")));
 
-    QString pluginName;
+    QString toolName;
     QString searchPattern = search;
 
     CmdTool *tool = nullptr;
@@ -95,29 +95,31 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
     if (search.startsWith(QLatin1Char('@'))) {
         const int idx = search.indexOf(QLatin1Char(' '));
         if (idx >= 0) {
-            pluginName = search.mid(1, idx - 1);
+            toolName = search.mid(1, idx - 1);
             searchPattern = search.mid(idx + 1);
         } else {
-            pluginName = search.mid(1);
+            toolName = search.mid(1);
             searchPattern.clear();
         }
 
-        if (pluginName == QLatin1String("kio-filenamesearch")) {
+        if (toolName == QLatin1String("kio-filenamesearch")) {
             return runKioFileNameSearch(url);
         }
 
-        tool = manager.getTool(pluginName);
+        if (!dirUrl.isLocalFile()) {
+            return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" can only run in local directories", toolName));
+        }
+
+        tool = manager.getTool(toolName);
         if (!tool) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Plugin" << pluginName << "not found";
-            return KIO::WorkerResult::pass();
+            return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" not found", toolName));
         } else if (!tool->isAvailable()) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Plugin" << pluginName << "not available";
-            return KIO::WorkerResult::pass();
+            return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" not available", toolName));
         }
     } else {
         // Decide default plugin
         if (!dirUrl.isLocalFile()) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Cmdtool can only run on local files, fallback to kio_filenamesearch";
+            qCDebug(KIO_CMDTOOLSEARCH) << "Cmdtool can only run in local directories, fallback to kio_filenamesearch";
             return runKioFileNameSearch(url);
         }
         if (checkContent) {
@@ -126,12 +128,12 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
             tool = manager.getDefaultFileNameSearchTool();
         }
         if (!tool || !tool->isAvailable()) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Default plugin not available, fallback to kio_filenamesearch";
+            qCDebug(KIO_CMDTOOLSEARCH) << "Default plugin not available, fallback to kio_filenamesearch";
             return runKioFileNameSearch(url);
         }
     }
 
-    qDebug() << "Running plugin" << tool->name() << "with search pattern" << searchPattern;
+    qCDebug(KIO_CMDTOOLSEARCH) << "Running tool" << tool->name() << "with search pattern" << searchPattern;
 
     QDir rootDir(dirUrl.toLocalFile());
     connect(tool, &CmdTool::result, [this, rootDir](const QString &filePath) {
