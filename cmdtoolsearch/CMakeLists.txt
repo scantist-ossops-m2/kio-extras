@@ -3,6 +3,7 @@ kcoreaddons_add_plugin(kio_cmdtoolsearch INSTALL_NAMESPACE "kf6/kio")
 configure_file(config.h.cmake config.h)
 
 add_library(cmdtool_static STATIC)
+set_property(TARGET cmdtool_static PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(cmdtool_static PRIVATE cmdtool.cpp cmdtool_manager.cpp)
 target_link_libraries(cmdtool_static
     Qt::Core
