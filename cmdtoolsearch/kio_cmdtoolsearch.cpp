@@ -35,8 +35,7 @@ class KIOPluginForMetaData : public QObject
 };
 
 CmdToolSearchProtocol::CmdToolSearchProtocol(const QByteArray &pool, const QByteArray &app)
-    : QObject()
-    , WorkerBase("search", pool, app)
+    : ForwardingWorkerBase("filenamesearch", pool, app)
 {
 }
 
@@ -103,20 +102,23 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
             searchPattern.clear();
         }
 
+        if (pluginName == QLatin1String("kio-filenamesearch")) {
+            return runKioFileNameSearch(url);
+        }
+
         tool = manager.getTool(pluginName);
         if (!tool) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Plugin" << tool->name() << "not found";
+            qCWarning(KIO_CMDTOOLSEARCH) << "Plugin" << pluginName << "not found";
             return KIO::WorkerResult::pass();
         } else if (!tool->isAvailable()) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Plugin" << tool->name() << "not available";
+            qCWarning(KIO_CMDTOOLSEARCH) << "Plugin" << pluginName << "not available";
             return KIO::WorkerResult::pass();
         }
     } else {
         // Decide default plugin
         if (!dirUrl.isLocalFile()) {
             qCWarning(KIO_CMDTOOLSEARCH) << "Cmdtool can only run on local files, fallback to kio_filenamesearch";
-            // FIXME: use filenamesearch
-            return KIO::WorkerResult::pass();
+            return runKioFileNameSearch(url);
         }
         if (checkContent) {
             tool = manager.getDefaultFileContentSearchTool();
@@ -124,9 +126,8 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
             tool = manager.getDefaultFileNameSearchTool();
         }
         if (!tool || !tool->isAvailable()) {
-            qCWarning(KIO_CMDTOOLSEARCH) << "Default plugin" << tool->name() << "not available, fallback to kio_filenamesearch";
-            // FIXME: use filenamesearch
-            return KIO::WorkerResult::pass();
+            qCWarning(KIO_CMDTOOLSEARCH) << "Default plugin not available, fallback to kio_filenamesearch";
+            return runKioFileNameSearch(url);
         }
     }
 
@@ -146,6 +147,30 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
 
     tool->run(rootDir.absolutePath(), searchPattern, checkContent);
 
+    return KIO::WorkerResult::pass();
+}
+
+bool CmdToolSearchProtocol::rewriteUrl(const QUrl &url, QUrl &newURL)
+{
+    newURL = url;
+    return true;
+}
+
+KIO::WorkerResult CmdToolSearchProtocol::runKioFileNameSearch(const QUrl &url)
+{
+    // return ForwardingWorkerBase::listDir(url); // crashes
+
+    // insert a fake entry
+    const QUrlQuery urlQuery(url);
+    const QUrl dirUrl = QUrl(urlQuery.queryItemValue(QStringLiteral("url")));
+    QString fullPath = QDir(dirUrl.toLocalFile()).filePath(QStringLiteral("test"));
+    QUrl url2 = QUrl::fromLocalFile(fullPath);
+    KIO::UDSEntry uds;
+    uds.reserve(3);
+    uds.fastInsert(KIO::UDSEntry::UDS_NAME, url2.fileName());
+    uds.fastInsert(KIO::UDSEntry::UDS_URL, url2.url());
+    uds.fastInsert(KIO::UDSEntry::UDS_LOCAL_PATH, fullPath);
+    listEntry(uds);
     return KIO::WorkerResult::pass();
 }
 

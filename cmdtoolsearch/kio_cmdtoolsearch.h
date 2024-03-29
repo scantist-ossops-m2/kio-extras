@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include <KIO/WorkerBase>
+#include <KIO/ForwardingWorkerBase>
 
 #include <QUrl>
 
 #include <queue>
 #include <set>
 
-class CmdToolSearchProtocol : public QObject, public KIO::WorkerBase
+class CmdToolSearchProtocol : public KIO::ForwardingWorkerBase
 {
     Q_OBJECT
 
@@ -23,8 +23,10 @@ public:
     KIO::WorkerResult stat(const QUrl &url) override;
     KIO::WorkerResult listDir(const QUrl &url) override;
 
+protected:
+    bool rewriteUrl(const QUrl &url, QUrl &newURL) override;
+
 private:
     void listRootEntry();
-    void searchDir(const QUrl &dirUrl, const QRegularExpression &regex, bool searchContents, std::set<QString> &iteratedDirs, std::queue<QUrl> &pendingDirs);
-    KIO::WorkerResult runPlugin(const QUrl &url);
+    KIO::WorkerResult runKioFileNameSearch(const QUrl &url);
 };
