@@ -24,6 +24,8 @@ Q_SIGNALS:
     void result(const QString &pathStr);
 
 private:
+    bool isDirInHdd(const QString &dir);
+
     QDir m_toolDir;
     QString m_name;
     bool m_isValid = false;

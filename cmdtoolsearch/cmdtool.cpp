@@ -4,6 +4,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QStorageInfo>
 
 CmdTool::CmdTool(const QString &path)
     : m_toolDir(path)
@@ -81,6 +82,7 @@ bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool c
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("SEARCH_PATTERN"), searchPattern);
     env.insert(QStringLiteral("CHECK_CONTENT"), checkContent ? QStringLiteral("1") : QStringLiteral("0"));
+    env.insert(QStringLiteral("IN_HDD"), isDirInHdd(searchDir) ? QStringLiteral("1") : QStringLiteral("0"));
     process.setProcessEnvironment(env);
 
     process.start(QIODeviceBase::ReadOnly | QIODeviceBase::Unbuffered);
@@ -122,6 +124,41 @@ bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool c
     }
 
     return process.exitCode() == 0;
+}
+
+bool CmdTool::isDirInHdd(const QString &dir)
+{
+    QStorageInfo storageInfo(dir);
+    if (!storageInfo.isValid()) {
+        return false;
+    }
+
+    QString device = QString::fromUtf8(storageInfo.device());
+    if (!device.startsWith(QStringLiteral("/dev/"))) {
+        return false;
+    }
+    device = device.mid(5);
+
+    QDir sysfs(QStringLiteral("/sys/block"));
+    QStringList diskList = sysfs.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    diskList.sort();
+
+    // Try to match from the longest prefix
+    for (auto i = diskList.rbegin(); i != diskList.rend(); ++i) {
+        const QString &diskName = *i;
+        if (!device.startsWith(diskName)) {
+            continue;
+        }
+        QFile f(sysfs.absoluteFilePath(diskName + QStringLiteral("/queue/rotational")));
+        if (!f.open(QIODevice::ReadOnly)) {
+            return false;
+        }
+        QString rotational = QString::fromUtf8(f.readAll()).trimmed();
+        f.close();
+        return rotational.toInt() == 1;
+    }
+
+    return false;
 }
 
 #include "cmdtool.moc"

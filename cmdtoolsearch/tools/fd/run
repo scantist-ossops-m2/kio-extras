@@ -1,2 +1,5 @@
 #!/bin/sh
-fd "$SEARCH_PATTERN"
+if [ "$IN_HDD"z = "1z" ]; then
+    PARALLEL="-j1"
+fi
+fd $PARALLEL "$SEARCH_PATTERN"
