@@ -7,9 +7,9 @@
 #include "cmdtool.h"
 #include "cmdtool_manager.h"
 
-#include <KLocalizedString>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QString>
 #include <QTimer>
 
 namespace Options
@@ -17,19 +17,19 @@ namespace Options
 
 static QCommandLineOption list()
 {
-    static QCommandLineOption o{QStringLiteral("list"), i18n("list all tools")};
+    const static QCommandLineOption o{QStringLiteral("list"), QStringLiteral("list all tools")};
     return o;
 }
 
 static QCommandLineOption check()
 {
-    static QCommandLineOption o{QStringLiteral("check"), i18nc("Do not translate <tool>", "check if <tool> is available"), QStringLiteral("tool")};
+    const static QCommandLineOption o{QStringLiteral("check"), QStringLiteral("check if <tool> is available"), QStringLiteral("tool")};
     return o;
 }
 
 static QCommandLineOption run()
 {
-    static QCommandLineOption o{QStringLiteral("run"), i18nc("Do not translate <tool>", "run <tool>"), QStringLiteral("tool")};
+    const static QCommandLineOption o{QStringLiteral("run"), QStringLiteral("run <tool>"), QStringLiteral("tool")};
     return o;
 }
 
@@ -68,15 +68,15 @@ private Q_SLOTS:
             QString name = m_parser->value(Options::check());
             CmdTool *tool = manager.getTool(name);
             if (!tool) {
-                *cerr << i18n("Tool %1 not found", name) << '\n';
+                *cerr << QStringLiteral("Tool %1 not found").arg(name) << '\n';
                 exit(1);
             }
             bool available = tool->isAvailable();
             if (available) {
-                *cout << i18n("Tool %1 is available", name) << '\n';
+                *cout << QStringLiteral("Tool %1 is available").arg(name) << '\n';
                 exit(0);
             } else {
-                *cout << i18n("Tool %1 is not available", name) << '\n';
+                *cout << QStringLiteral("Tool %1 is not available").arg(name) << '\n';
                 exit(1);
             }
         }
@@ -85,7 +85,7 @@ private Q_SLOTS:
             QString name = m_parser->value(Options::run());
             CmdTool *tool = manager.getTool(name);
             if (!tool) {
-                *cerr << i18n("Tool %1 not found", name) << '\n';
+                *cerr << QStringLiteral("Tool %1 not found").arg(name) << '\n';
                 exit(1);
             }
             QString searchDir = m_parser->positionalArguments().at(0);
@@ -107,9 +107,8 @@ int main(int argc, char **argv)
 {
     QCommandLineParser parser;
     CmdToolApp app(argc, argv, &parser);
-    KLocalizedString::setApplicationDomain(QByteArrayLiteral("cmdtool"));
 
-    const QString description = i18n("CmdTool");
+    const QString description = QStringLiteral("CmdTool");
     const auto version = QStringLiteral("1.0");
 
     app.setApplicationVersion(version);
@@ -117,8 +116,8 @@ int main(int argc, char **argv)
     parser.addHelpOption();
     parser.setApplicationDescription(description);
     parser.addOptions({Options::list(), Options::check(), Options::run()});
-    parser.addPositionalArgument(QStringLiteral("search_dir"), i18n("The search dir"));
-    parser.addPositionalArgument(QStringLiteral("search_term"), i18n("The search term"));
+    parser.addPositionalArgument(QStringLiteral("search_dir"), QStringLiteral("The search dir"));
+    parser.addPositionalArgument(QStringLiteral("search_pattern"), QStringLiteral("The search pattern"));
     parser.process(app);
 
     // at least one operation should be specified

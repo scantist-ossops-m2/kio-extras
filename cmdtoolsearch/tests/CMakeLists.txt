@@ -4,5 +4,4 @@ target_sources(cmdtool PRIVATE cmdtool_main.cpp)
 target_link_libraries(cmdtool
     cmdtool_static
     Qt::Core
-    KF6::I18n
 )
