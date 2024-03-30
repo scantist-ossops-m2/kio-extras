@@ -79,7 +79,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
 
     const QString search = urlQuery.queryItemValue(QStringLiteral("search"));
     if (search.isEmpty()) {
-        return KIO::WorkerResult::pass();
+        return KIO::WorkerResult::fail(KIO::ERR_MALFORMED_URL, i18nc("@info:search failed because of missing argument", "No search pattern specified"));
     }
     const bool searchFileContents = urlQuery.queryItemValue(QStringLiteral("checkContent")) == QLatin1String("yes");
     const QUrl dirUrl = QUrl(urlQuery.queryItemValue(QStringLiteral("url")));
