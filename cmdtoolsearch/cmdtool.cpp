@@ -91,7 +91,9 @@ bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool s
     env.insert(QStringLiteral("ON_HDD"), isDirOnHdd(searchDir) ? QStringLiteral("1") : QStringLiteral("0"));
     process.setProcessEnvironment(env);
 
-    process.start(QIODeviceBase::ReadOnly | QIODeviceBase::Unbuffered);
+    process.start(QIODeviceBase::ReadWrite | QIODeviceBase::Unbuffered);
+    // Explicitly close the write channel, to avoid some tools waiting for input (e.g. ripgrep, when no path is given on cmdline)
+    process.closeWriteChannel();
 
     QDir rootDir(searchDir);
     QByteArray output;
