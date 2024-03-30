@@ -117,7 +117,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
         std::optional<CmdTool *> t = manager.getTool(toolName);
         if (!t) {
             return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" not found", toolName));
-        } else if (!tool->isAvailable()) {
+        } else if (!(*t)->isAvailable()) {
             return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" not available", toolName));
         }
         tool = *t;
