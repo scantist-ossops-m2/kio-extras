@@ -25,6 +25,7 @@ public:
 
 protected:
     bool rewriteUrl(const QUrl &url, QUrl &newURL) override;
+    void adjustUDSEntry(KIO::UDSEntry &entry, UDSEntryCreationMode creationMode) const override;
 
 private:
     void listRootEntry();

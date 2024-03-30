@@ -166,6 +166,11 @@ bool CmdToolSearchProtocol::rewriteUrl(const QUrl &url, QUrl &newURL)
     return true;
 }
 
+void CmdToolSearchProtocol::adjustUDSEntry(KIO::UDSEntry &entry, UDSEntryCreationMode creationMode) const
+{
+    // ForwardingWorkerBase::adjustUDSEntry() rewrites the URL to our scheme. We don't want that.
+}
+
 extern "C" int Q_DECL_EXPORT kdemain(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
