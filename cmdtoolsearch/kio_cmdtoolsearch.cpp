@@ -35,7 +35,7 @@ class KIOPluginForMetaData : public QObject
 };
 
 CmdToolSearchProtocol::CmdToolSearchProtocol(const QByteArray &pool, const QByteArray &app)
-    : ForwardingWorkerBase("filenamesearch", pool, app)
+    : ForwardingWorkerBase("cmdtoolsearch", pool, app)
 {
 }
 
@@ -75,8 +75,6 @@ void CmdToolSearchProtocol::listRootEntry()
 
 KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
 {
-    listRootEntry();
-
     const QUrlQuery urlQuery(url);
 
     const QString search = urlQuery.queryItemValue(QStringLiteral("search"));
@@ -102,8 +100,14 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
             searchPattern.clear();
         }
 
-        if (toolName == QLatin1String("kio-filenamesearch")) {
-            return runKioFileNameSearch(url);
+        if (toolName == QLatin1String("plain")) {
+            // remove the "@plain" part from the search string
+            QUrlQuery newUrlQuery = urlQuery;
+            newUrlQuery.removeQueryItem(QStringLiteral("search"));
+            newUrlQuery.addQueryItem(QStringLiteral("search"), searchPattern);
+            QUrl newUrl = url;
+            newUrl.setQuery(newUrlQuery.query());
+            return ForwardingWorkerBase::listDir(newUrl);
         }
 
         if (!dirUrl.isLocalFile()) {
@@ -120,7 +124,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
         // Decide default plugin
         if (!dirUrl.isLocalFile()) {
             qCDebug(KIO_CMDTOOLSEARCH) << "Cmdtool can only run in local directories, fallback to kio_filenamesearch";
-            return runKioFileNameSearch(url);
+            return ForwardingWorkerBase::listDir(url);
         }
         if (checkContent) {
             tool = manager.getDefaultFileContentSearchTool();
@@ -129,12 +133,13 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
         }
         if (!tool || !tool->isAvailable()) {
             qCDebug(KIO_CMDTOOLSEARCH) << "Default plugin not available, fallback to kio_filenamesearch";
-            return runKioFileNameSearch(url);
+            return ForwardingWorkerBase::listDir(url);
         }
     }
 
     qCDebug(KIO_CMDTOOLSEARCH) << "Running tool" << tool->name() << "with search pattern" << searchPattern;
 
+    listRootEntry();
     QDir rootDir(dirUrl.toLocalFile());
     connect(tool, &CmdTool::result, [this, rootDir](const QString &filePath) {
         QString fullPath = rootDir.filePath(filePath.endsWith(QLatin1Char('/')) ? filePath.left(filePath.size() - 1) : filePath);
@@ -155,25 +160,8 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
 bool CmdToolSearchProtocol::rewriteUrl(const QUrl &url, QUrl &newURL)
 {
     newURL = url;
+    newURL.setScheme(QStringLiteral("filenamesearch"));
     return true;
-}
-
-KIO::WorkerResult CmdToolSearchProtocol::runKioFileNameSearch(const QUrl &url)
-{
-    // return ForwardingWorkerBase::listDir(url); // crashes
-
-    // insert a fake entry
-    const QUrlQuery urlQuery(url);
-    const QUrl dirUrl = QUrl(urlQuery.queryItemValue(QStringLiteral("url")));
-    QString fullPath = QDir(dirUrl.toLocalFile()).filePath(QStringLiteral("test"));
-    QUrl url2 = QUrl::fromLocalFile(fullPath);
-    KIO::UDSEntry uds;
-    uds.reserve(3);
-    uds.fastInsert(KIO::UDSEntry::UDS_NAME, url2.fileName());
-    uds.fastInsert(KIO::UDSEntry::UDS_URL, url2.url());
-    uds.fastInsert(KIO::UDSEntry::UDS_LOCAL_PATH, fullPath);
-    listEntry(uds);
-    return KIO::WorkerResult::pass();
 }
 
 extern "C" int Q_DECL_EXPORT kdemain(int argc, char **argv)
