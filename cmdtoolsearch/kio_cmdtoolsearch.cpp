@@ -69,7 +69,7 @@ void CmdToolSearchProtocol::listRootEntry()
     entry.fastInsert(KIO::UDSEntry::UDS_NAME, QStringLiteral("."));
     entry.fastInsert(KIO::UDSEntry::UDS_FILE_TYPE, S_IFDIR);
     entry.fastInsert(KIO::UDSEntry::UDS_SIZE, 0);
-    entry.fastInsert(KIO::UDSEntry::UDS_ACCESS, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH);
+    entry.fastInsert(KIO::UDSEntry::UDS_ACCESS, S_IRUSR | S_IWUSR | S_IXUSR);
     listEntry(entry);
 }
 
@@ -141,12 +141,14 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
 
     listRootEntry();
     QDir rootDir(dirUrl.toLocalFile());
-    connect(tool, &CmdTool::result, [this, rootDir](const QString &filePath) {
-        QString fullPath = rootDir.cleanPath(filePath.endsWith(QLatin1Char('/')) ? filePath.left(filePath.size() - 1) : filePath);
+    connect(tool, &CmdTool::result, [this, rootDir](const QString &result) {
+        QString relativePath = rootDir.cleanPath(result);
+        QString fullPath = rootDir.filePath(relativePath);
         QUrl url = QUrl::fromLocalFile(fullPath);
         KIO::UDSEntry uds;
-        uds.reserve(3);
+        uds.reserve(4);
         uds.fastInsert(KIO::UDSEntry::UDS_NAME, url.fileName());
+        uds.fastInsert(KIO::UDSEntry::UDS_DISPLAY_NAME, url.fileName());
         uds.fastInsert(KIO::UDSEntry::UDS_URL, url.url());
         uds.fastInsert(KIO::UDSEntry::UDS_LOCAL_PATH, fullPath);
         listEntry(uds);
