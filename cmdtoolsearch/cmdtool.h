@@ -24,13 +24,13 @@ public:
 
     bool isValid() const;
     bool isAvailable() const;
-    bool run(const QString &searchDir, const QString &searchPattern, bool checkContent);
+    bool run(const QString &searchDir, const QString &searchPattern, bool searchFileContents);
 
 Q_SIGNALS:
     void result(const QString &pathStr);
 
 private:
-    bool isDirInHdd(const QString &dir);
+    bool isDirOnHdd(const QString &dir);
 
     QDir m_toolDir;
     QString m_name;

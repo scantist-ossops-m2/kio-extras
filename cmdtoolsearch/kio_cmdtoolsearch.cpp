@@ -81,7 +81,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
     if (search.isEmpty()) {
         return KIO::WorkerResult::pass();
     }
-    const bool checkContent = urlQuery.queryItemValue(QStringLiteral("checkContent")) == QLatin1String("yes");
+    const bool searchFileContents = urlQuery.queryItemValue(QStringLiteral("checkContent")) == QLatin1String("yes");
     const QUrl dirUrl = QUrl(urlQuery.queryItemValue(QStringLiteral("url")));
 
     QString toolName;
@@ -126,7 +126,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
             qCDebug(KIO_CMDTOOLSEARCH) << "Cmdtool can only run in local directories, fallback to kio_filenamesearch";
             return ForwardingWorkerBase::listDir(url);
         }
-        if (checkContent) {
+        if (searchFileContents) {
             tool = manager.getDefaultFileContentSearchTool();
         } else {
             tool = manager.getDefaultFileNameSearchTool();
@@ -152,7 +152,7 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
         listEntry(uds);
     });
 
-    tool->run(rootDir.absolutePath(), searchPattern, checkContent);
+    tool->run(rootDir.absolutePath(), searchPattern, searchFileContents);
 
     return KIO::WorkerResult::pass();
 }

@@ -90,11 +90,11 @@ private Q_SLOTS:
             }
             QString searchDir = m_parser->positionalArguments().at(0);
             QString searchPattern = m_parser->positionalArguments().at(1);
-            bool checkContent = false;
+            bool searchFileContents = false;
             connect(tool, &CmdTool::result, [](QString pathStr) {
                 *cout << pathStr << '\n';
             });
-            bool success = tool->run(searchDir, searchPattern, checkContent);
+            bool success = tool->run(searchDir, searchPattern, searchFileContents);
             exit(success ? 0 : 1);
         }
     }

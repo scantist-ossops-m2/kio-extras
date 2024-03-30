@@ -75,7 +75,7 @@ CmdTool::Separator CmdTool::separator() const
     return m_separator;
 }
 
-bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool checkContent)
+bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool searchFileContents)
 {
     if (!isAvailable()) {
         return false;
@@ -87,8 +87,8 @@ bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool c
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("SEARCH_PATTERN"), searchPattern);
-    env.insert(QStringLiteral("CHECK_CONTENT"), checkContent ? QStringLiteral("1") : QStringLiteral("0"));
-    env.insert(QStringLiteral("IN_HDD"), isDirInHdd(searchDir) ? QStringLiteral("1") : QStringLiteral("0"));
+    env.insert(QStringLiteral("SEARCH_FILE_CONTENTS"), searchFileContents ? QStringLiteral("1") : QStringLiteral("0"));
+    env.insert(QStringLiteral("ON_HDD"), isDirOnHdd(searchDir) ? QStringLiteral("1") : QStringLiteral("0"));
     process.setProcessEnvironment(env);
 
     process.start(QIODeviceBase::ReadOnly | QIODeviceBase::Unbuffered);
@@ -132,7 +132,7 @@ bool CmdTool::run(const QString &searchDir, const QString &searchPattern, bool c
     return process.exitCode() == 0;
 }
 
-bool CmdTool::isDirInHdd(const QString &dir)
+bool CmdTool::isDirOnHdd(const QString &dir)
 {
     QStorageInfo storageInfo(dir);
     if (!storageInfo.isValid()) {
