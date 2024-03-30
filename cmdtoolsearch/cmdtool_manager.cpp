@@ -7,6 +7,25 @@
 #include "cmdtool_manager.h"
 #include "config.h"
 
+static void loadDefaults(QStringList &list, const QString &name, const QStringList &searchDirs)
+{
+    for (const QString &i : searchDirs) {
+        QDir dir(i);
+        QFile file(dir.filePath(name));
+        if (file.open(QIODevice::ReadOnly)) {
+            QTextStream in(&file);
+            while (!in.atEnd()) {
+                QString line = in.readLine();
+                line = line.trimmed();
+                if (!line.isEmpty() && !line.startsWith(QLatin1Char('#'))) {
+                    list.append(line);
+                }
+            }
+            return;
+        }
+    }
+}
+
 CmdToolManager::CmdToolManager()
 {
     QList<QString> searchDirs;
@@ -33,6 +52,9 @@ CmdToolManager::CmdToolManager()
             }
         }
     }
+
+    loadDefaults(m_defaultFileNameSearchTools, QStringLiteral("default_file_name_search"), searchDirs);
+    loadDefaults(m_defaultFileContentSearchTools, QStringLiteral("default_file_content_search"), searchDirs);
 }
 
 CmdToolManager::~CmdToolManager()
@@ -72,12 +94,23 @@ CmdTool *CmdToolManager::getTool(const QString &name)
 
 CmdTool *CmdToolManager::getDefaultFileNameSearchTool()
 {
-    return getTool(QStringLiteral("default_file_name_search"));
+    return getFirstAvailableToolInList(m_defaultFileNameSearchTools);
 }
 
 CmdTool *CmdToolManager::getDefaultFileContentSearchTool()
 {
-    return getTool(QStringLiteral("default_file_content_search"));
+    return getFirstAvailableToolInList(m_defaultFileContentSearchTools);
+}
+
+CmdTool *CmdToolManager::getFirstAvailableToolInList(const QStringList &list)
+{
+    for (const QString &name : list) {
+        CmdTool *tool = getTool(name);
+        if (tool && tool->isAvailable()) {
+            return tool;
+        }
+    }
+    return nullptr;
 }
 
 #include "cmdtool_manager.moc"

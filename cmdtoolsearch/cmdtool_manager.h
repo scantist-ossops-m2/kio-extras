@@ -28,5 +28,9 @@ public:
     CmdTool *getDefaultFileContentSearchTool();
 
 private:
+    CmdTool *getFirstAvailableToolInList(const QStringList &list);
+
     QMap<QString, CmdTool *> m_tools;
+    QStringList m_defaultFileNameSearchTools;
+    QStringList m_defaultFileContentSearchTools;
 };
