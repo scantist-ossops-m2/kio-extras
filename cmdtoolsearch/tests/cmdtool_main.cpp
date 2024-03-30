@@ -58,20 +58,20 @@ private Q_SLOTS:
         if (m_parser->isSet(Options::list())) {
             // list all tools
             for (auto i : manager.listAllTools()) {
-                CmdTool *tool = manager.getTool(i);
-                *cout << i << '\t' << tool->path() << '\t' << tool->isAvailable() << '\n';
+                std::optional<CmdTool *> tool = manager.getTool(i);
+                *cout << i << '\t' << (*tool)->path() << '\t' << (*tool)->isAvailable() << '\n';
             }
             exit(0);
         }
 
         if (m_parser->isSet(Options::check())) {
             QString name = m_parser->value(Options::check());
-            CmdTool *tool = manager.getTool(name);
+            std::optional<CmdTool *> tool = manager.getTool(name);
             if (!tool) {
                 *cerr << QStringLiteral("Tool %1 not found").arg(name) << '\n';
                 exit(1);
             }
-            bool available = tool->isAvailable();
+            bool available = (*tool)->isAvailable();
             if (available) {
                 *cout << QStringLiteral("Tool %1 is available").arg(name) << '\n';
                 exit(0);
@@ -83,7 +83,7 @@ private Q_SLOTS:
 
         if (m_parser->isSet(Options::run())) {
             QString name = m_parser->value(Options::run());
-            CmdTool *tool = manager.getTool(name);
+            std::optional<CmdTool *> tool = manager.getTool(name);
             if (!tool) {
                 *cerr << QStringLiteral("Tool %1 not found").arg(name) << '\n';
                 exit(1);
@@ -91,10 +91,10 @@ private Q_SLOTS:
             QString searchDir = m_parser->positionalArguments().at(0);
             QString searchPattern = m_parser->positionalArguments().at(1);
             bool searchFileContents = false;
-            connect(tool, &CmdTool::result, [](QString pathStr) {
+            connect(*tool, &CmdTool::result, [](QString pathStr) {
                 *cout << pathStr << '\n';
             });
-            bool success = tool->run(searchDir, searchPattern, searchFileContents);
+            bool success = (*tool)->run(searchDir, searchPattern, searchFileContents);
             exit(success ? 0 : 1);
         }
     }

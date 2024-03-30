@@ -83,30 +83,30 @@ QStringList CmdToolManager::listAvailableTools()
     return result;
 }
 
-CmdTool *CmdToolManager::getTool(const QString &name)
+std::optional<CmdTool *> CmdToolManager::getTool(const QString &name)
 {
     if (m_tools.contains(name)) {
         return m_tools[name];
     } else {
-        return nullptr;
+        return std::nullopt;
     }
 }
 
-CmdTool *CmdToolManager::getDefaultFileNameSearchTool()
+std::optional<CmdTool *> CmdToolManager::getDefaultFileNameSearchTool()
 {
     return getFirstAvailableToolInList(m_defaultFileNameSearchTools);
 }
 
-CmdTool *CmdToolManager::getDefaultFileContentSearchTool()
+std::optional<CmdTool *> CmdToolManager::getDefaultFileContentSearchTool()
 {
     return getFirstAvailableToolInList(m_defaultFileContentSearchTools);
 }
 
-CmdTool *CmdToolManager::getFirstAvailableToolInList(const QStringList &list)
+std::optional<CmdTool *> CmdToolManager::getFirstAvailableToolInList(const QStringList &list)
 {
     for (const QString &name : list) {
-        CmdTool *tool = getTool(name);
-        if (tool && tool->isAvailable()) {
+        std::optional<CmdTool *> tool = getTool(name);
+        if (tool && (*tool)->isAvailable()) {
             return tool;
         }
     }

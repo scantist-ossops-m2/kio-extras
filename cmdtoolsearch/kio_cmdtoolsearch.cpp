@@ -114,27 +114,30 @@ KIO::WorkerResult CmdToolSearchProtocol::listDir(const QUrl &url)
             return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" can only run in local directories", toolName));
         }
 
-        tool = manager.getTool(toolName);
-        if (!tool) {
+        std::optional<CmdTool *> t = manager.getTool(toolName);
+        if (!t) {
             return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" not found", toolName));
         } else if (!tool->isAvailable()) {
             return KIO::WorkerResult::fail(KIO::ERR_UNSUPPORTED_ACTION, i18nc("@info", "Tool \"%1\" not available", toolName));
         }
+        tool = *t;
     } else {
         // Decide default plugin
         if (!dirUrl.isLocalFile()) {
             qCDebug(KIO_CMDTOOLSEARCH) << "Cmdtool can only run in local directories, fallback to kio_filenamesearch";
             return ForwardingWorkerBase::listDir(url);
         }
+        std::optional<CmdTool *> t;
         if (searchFileContents) {
-            tool = manager.getDefaultFileContentSearchTool();
+            t = manager.getDefaultFileContentSearchTool();
         } else {
-            tool = manager.getDefaultFileNameSearchTool();
+            t = manager.getDefaultFileNameSearchTool();
         }
-        if (!tool || !tool->isAvailable()) {
+        if (!t) {
             qCDebug(KIO_CMDTOOLSEARCH) << "Default plugin not available, fallback to kio_filenamesearch";
             return ForwardingWorkerBase::listDir(url);
         }
+        tool = *t;
     }
 
     qCDebug(KIO_CMDTOOLSEARCH) << "Running tool" << tool->name() << "with search pattern" << searchPattern;

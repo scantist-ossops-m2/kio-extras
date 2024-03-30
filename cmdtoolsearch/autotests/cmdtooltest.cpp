@@ -31,13 +31,17 @@ private Q_SLOTS:
         QCOMPARE(grep.separator(), CmdTool::SEP_NEWLINE);
     }
 
-    void testFind()
+    void testRun()
     {
         CmdTool find(QStringLiteral(KDE_INSTALL_FULL_LIBEXECDIR "/cmdtoolsearch/find"));
-        connect(&find, &CmdTool::result, this, [this](const QString &pathStr) {
-            qDebug() << pathStr;
+        QStringList result;
+        connect(&find, &CmdTool::result, this, [&result](const QString &pathStr) {
+            result.append(pathStr);
         });
-        QVERIFY(find.run(QStringLiteral(KDE_INSTALL_FULL_LIBEXECDIR "/cmdtoolsearch/find"), QStringLiteral("run"), false));
+        QVERIFY(find.run(QStringLiteral(KDE_INSTALL_FULL_LIBEXECDIR "/cmdtoolsearch/find"), QStringLiteral("metadata"), false));
+        result.sort();
+        QCOMPARE(result.size(), 1);
+        QCOMPARE(result.at(0), QStringLiteral("./metadata.json"));
     }
 };
 

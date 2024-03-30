@@ -12,6 +12,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <optional>
+
 class CmdToolManager : public QObject
 {
     Q_OBJECT
@@ -23,12 +25,12 @@ public:
     QStringList listAllTools();
     QStringList listAvailableTools();
 
-    CmdTool *getTool(const QString &name);
-    CmdTool *getDefaultFileNameSearchTool();
-    CmdTool *getDefaultFileContentSearchTool();
+    std::optional<CmdTool *> getTool(const QString &name);
+    std::optional<CmdTool *> getDefaultFileNameSearchTool();
+    std::optional<CmdTool *> getDefaultFileContentSearchTool();
 
 private:
-    CmdTool *getFirstAvailableToolInList(const QStringList &list);
+    std::optional<CmdTool *> getFirstAvailableToolInList(const QStringList &list);
 
     QMap<QString, CmdTool *> m_tools;
     QStringList m_defaultFileNameSearchTools;
