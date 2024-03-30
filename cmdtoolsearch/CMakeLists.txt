@@ -9,16 +9,6 @@ target_link_libraries(cmdtool_static
     Qt::Core
 )
 
-add_executable(cmdtool)
-ecm_mark_nongui_executable(cmdtool)
-target_sources(cmdtool PRIVATE cmdtool_main.cpp)
-target_link_libraries(cmdtool
-    cmdtool_static
-    Qt::Core
-    KF6::I18n
-)
-install(TARGETS cmdtool DESTINATION ${KDE_INSTALL_FULL_LIBEXECDIR}/cmdtoolsearch)
-
 target_link_libraries(kio_cmdtoolsearch cmdtool_static KF6::KIOCore KF6::DBusAddons Qt::Network KF6::KIOCore KF6::I18n)
 target_sources(kio_cmdtoolsearch PRIVATE kio_cmdtoolsearch.cpp)
 
@@ -35,4 +25,5 @@ install(DIRECTORY tools/ DESTINATION ${KDE_INSTALL_FULL_LIBEXECDIR}/cmdtoolsearc
 
 if (BUILD_TESTING)
     add_subdirectory(autotests)
+    add_subdirectory(tests)
 endif()
